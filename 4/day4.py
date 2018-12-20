@@ -14,38 +14,38 @@ for l in lines:
 newlist = sorted(unsorted, key=itemgetter('time'))
 
 # print(newlist)
+f = open("output.txt", "a")
+for x in newlist:
+    w = x['time'] + ";" + x['action']
+    f.write(w + "\n")
 
 guard = 0
 g = 0
-start = ""
-stop = ""
+
 times = [{'sleep': 0, 'guard': 0} for i in range(4000)]
+# times = [0 for i in range(4000)]
 # print(times)
+
+# first id
+tg = newlist[0]['action'].split("#")[1].split(" ")[0]
+
+c = 0
 
 for n in newlist:
     if "#" in n['action']:
-        g = n['action'].split("#")[1].split(" ")[0]
-        start = ""
-        stop = ""
+        g = int(n['action'].split("#")[1].split(" ")[0])
 
-    if g != guard:
-        a = n['action'].split(" ")[0]
-        # print(a)
-        if a == "falls":
-            start = n["time"]
-        if a == "wakes":
-            stop = n["time"]
+    if "falls" in n['action']:
+        start = int(newlist[c]['time'].split(":")[1])
+        stop = int(newlist[c + 1]['time'].split(":")[1])
+        diff = stop - start
+        # print("[%s] - %s" % (g, diff))
+        times[g]['sleep'] += diff
+        times[g]['guard'] = g
 
-        if start != "" and stop != "":
-            s1 = int(start.split(":")[1])
-            s2 = int(stop.split(":")[1])
-            sleep = s2 - s1
-            # print(str(sleep) + " - " + str(g))
-            times[int(g)]['sleep'] += sleep
-            times[int(g)]['guard'] = g
+    c += 1
 
-            guard = g
-
+# print(times)
 maxt = 0
 maxid = 0
 id = 0
@@ -53,9 +53,44 @@ for t in times:
     if t['sleep'] > maxt:
         maxt = t['sleep']
         maxid = t['guard']
+        # print(t)
+
+p = False
+
+
+hour = [0 for i in range(59)]
+s1 = 0
+s2 = 0
 
 for n in newlist:
-    if maxid in n['action']:
-        print(n)
+    if str(maxid) in n['action']:
+        p = True
+    if p:
+        # print(n)
+        if "wakes" in n['action']:
+            s1 = int(n['time'][-2:])
+            # print(s1)
+        if "falls" in n['action']:
+            s2 = int(n['time'][-2:])
+            # print(s2)
 
-# nope, not yet :P
+    if s1 > 0 and s2 > 0:
+        # print("from: " + str(s1) + " to " + str(s2))
+        for s in range(s2, s1):
+            hour[s] += 1
+
+    if "wakes" in n['action']:
+        p = False
+        s1 = 0
+        s2 = 0
+
+start = 0
+minute = 0
+
+for m in hour:
+    if max(hour) == m:
+        # print("[" + str(start) + "] " + str(m))
+        minute = start
+    start += 1
+
+print(maxid * minute)
